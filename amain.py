@@ -3,8 +3,6 @@ import os
 import glob
 from datetime import datetime, timedelta
 
-
-
 def listarArquivosCSV():
     """Lista todos os arquivos CSV no diretório atual"""
     arquivosCSV = glob.glob("*.csv")
@@ -185,7 +183,11 @@ def lerArquivoCSV(nome_arquivo):
             print("\n" + "=" * 50)
             print("Dados dos participantes (vetores):")
             print("=" * 50)
-            for linha in rawMatrix[7:]:  # Linhas 8 em diante
+            for linha in rawMatrix[9:]:  # Linhas 10 em diante
+                # Verifica se a linha começa com "3. Atividades" e interrompe o loop
+                if len(linha) <=1: # and linha[0].strip() == "3. Atividades":
+                    break
+                    
                 if len(linha) >= 4:
                     # Adiciona cada campo ao seu respectivo vetor
                     nomes.append(linha[0].strip())
@@ -271,9 +273,16 @@ def main():
                 break
             print("\nVamos ajustar os horários novamente...")
         
-        arquivosSelecionados = selecionarMultiplosArquivos()
+        arquivosSelecionados = selecionarMultiplosArquivos() # guarda em CSV
         if not arquivosSelecionados:
             break
+
+        # print("===================================================")
+        # print(arquivosSelecionados)
+        # print("===================================================")
+
+
+
         
         for arquivo in arquivosSelecionados:
             #mudar lerarquivo para receber arquivos selecionados e realizar um
