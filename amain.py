@@ -3,6 +3,7 @@ import os
 import glob
 from datetime import datetime, timedelta
 
+# DONE
 def listarArquivosCSV():
     """Lista todos os arquivos CSV no diretório atual"""
     arquivosCSV = glob.glob("*.csv")
@@ -16,7 +17,7 @@ def listarArquivosCSV():
 
     return arquivosCSV
 
-
+# DONE
 def selecionarMultiplosArquivos():
     """Permite ao usuário selecionar vários arquivos da lista com base no número de dias do curso """
     
@@ -71,7 +72,7 @@ def selecionarMultiplosArquivos():
         except ValueError:
             print("Entrada inválida. Por favor, digite um número.")
 
-
+# DONE
 def imprimir_conteudo_cru(linhas):
     print("\n" + ("=" * 50))
     print("Conteúdo cru completo do arquivo:")
@@ -80,7 +81,7 @@ def imprimir_conteudo_cru(linhas):
         print(linha)
     print(("=" * 25) + " FIM " + ("=" * 25))
 
-
+# TODO
 def calcularTempo(inicio_str, fim_str):
     # Função para converter string HH:MM para objeto datetime (com data fictícia)
     def parse_time(time_str):
@@ -104,6 +105,7 @@ def calcularTempo(inicio_str, fim_str):
 
     return total_segundos, horas, minutos, segundos
 
+# TODO
 def calcularTempoLimitado(entrada_str, saida_str, inicio_limite_str, fim_limite_str):
     # Converte strings para objetos datetime
     def parse_datetime(dt_str):
@@ -154,7 +156,7 @@ def calcularTempoLimitado(entrada_str, saida_str, inicio_limite_str, fim_limite_
     
     return total_segundos, horas, minutos, segundos
 
-
+# TODO
 def lerArquivoCSV(nome_arquivo):
     # Inicializa os vetores (listas) para cada campo
     nomes = []
@@ -217,6 +219,7 @@ def lerArquivoCSV(nome_arquivo):
         "outros_dados": outros_dados,
     }
     
+# DONE
 def validarHorario(mensagem):
     """
     Valida horário no formato HH:MM, incluindo horas (00-23) e minutos (00-59).
@@ -235,8 +238,10 @@ def validarHorario(mensagem):
                 return horas, minutos
         print("Horário inválido! Use o formato HH:MM (Ex: 14:30).")
 
+# TODO
 def calcularDuracao(hInicio, minInicio, hFim, minFim):
-    """Calcula a diferença entre dois horários e retorna a duração em horas e minutos."""
+    """Calcula a diferença entre dois horários e retorna a duração em horas e minutos,
+    bem como 75% dessa duração."""
     # Converter tudo para minutos
     total_inicio = hInicio * 60 + minInicio
     total_fim = hFim * 60 + minFim
@@ -251,7 +256,12 @@ def calcularDuracao(hInicio, minInicio, hFim, minFim):
     horas = diferenca // 60
     minutos = diferenca % 60
     
-    return horas, minutos
+    # Calcular 75% da duração (em minutos)
+    diferenca_75 = diferenca * 0.75
+    horas_75 = int(diferenca_75 // 60)
+    minutos_75 = int(diferenca_75 % 60)
+    
+    return horas, minutos, horas_75, minutos_75
 
 def main():
     print("\n=== Leitor de Arquivos CSV ===")
@@ -263,9 +273,10 @@ def main():
             hInicio, mInicio = validarHorario("\nQue horas começou a reunião?")
             hFim, mFim = validarHorario("\nQue horas terminou a reunião?")
             
-            hTotal, mTotal = calcularDuracao(hInicio, mInicio, hFim, mFim)
+            hTotal, mTotal, h75, m75 = calcularDuracao(hInicio, mInicio, hFim, mFim)
             
             print(f"\n⏳ Duração calculada: {hTotal:02d}:{mTotal:02d}")
+            print(f"75% da duração: {h75} horas e {m75} minutos")
             
             resp = input("\nA duração está correta? (s/n) \n> ").strip().lower()
             
