@@ -4,6 +4,59 @@ import glob
 from datetime import datetime, timedelta
 
 # DONE
+def validarHorario(mensagem):
+    """
+    Valida horário no formato HH:MM, incluindo horas (00-23) e minutos (00-59).
+    """
+    while True:
+        horario = input(f"{mensagem} (Ex: 23:59)\n> ")
+        if (
+            len(horario) == 5
+            and horario[2] == ':'
+            and horario[:2].isdigit()
+            and horario[3:].isdigit()
+        ):
+            horas = int(horario[:2])
+            minutos = int(horario[3:])
+            if 0 <= horas <= 23 and 0 <= minutos <= 59:
+                return horas, minutos
+        print("Horário inválido! Use o formato HH:MM (Ex: 14:30).")
+
+# TODO
+def calcularDuracao(hInicio, minInicio, hFim, minFim):
+    """Calcula a diferença entre dois horários e retorna a duração em horas e minutos,
+    bem como 75% dessa duração."""
+    # Converter tudo para minutos
+    total_inicio = hInicio * 60 + minInicio
+    total_fim = hFim * 60 + minFim
+    
+    # Calcular diferença (tratando caso em que passa para o dia seguinte)
+    if total_fim < total_inicio:
+        total_fim += 24 * 60  # Adiciona 24 horas se terminar no dia seguinte
+    
+    diferenca = total_fim - total_inicio
+    
+    # Converter de volta para horas e minutos
+    horas = diferenca // 60
+    minutos = diferenca % 60
+    
+    # Calcular 75% da duração (em minutos)
+    diferenca_75 = diferenca * 0.75
+    horas_75 = int(diferenca_75 // 60)
+    minutos_75 = int(diferenca_75 % 60)
+    
+    return horas, minutos, horas_75, minutos_75
+
+# DONE
+def imprimir_conteudo_cru(linhas):
+    print("\n" + ("=" * 50))
+    print("Conteúdo cru completo do arquivo:")
+    print(("=" * 23) + " INÍCIO " + ("=" * 23))
+    for linha in linhas:
+        print(linha)
+    print(("=" * 25) + " FIM " + ("=" * 25))
+
+# DONE
 def listarArquivosCSV():
     """Lista todos os arquivos CSV no diretório atual"""
     arquivosCSV = glob.glob("*.csv")
@@ -72,14 +125,68 @@ def selecionarMultiplosArquivos():
         except ValueError:
             print("Entrada inválida. Por favor, digite um número.")
 
-# DONE
-def imprimir_conteudo_cru(linhas):
-    print("\n" + ("=" * 50))
-    print("Conteúdo cru completo do arquivo:")
-    print(("=" * 23) + " INÍCIO " + ("=" * 23))
-    for linha in linhas:
-        print(linha)
-    print(("=" * 25) + " FIM " + ("=" * 25))
+# TODO
+def lerArquivoCSV(nome_arquivo):
+    # Inicializa os vetores (listas) para cada campo
+    nomes = []
+    entradas = []
+    saidas = []
+    duracoes = []
+    outros_dados = {}  # Para as primeiras linhas (caso ainda queira mantê-las)
+
+    try:
+        with open(nome_arquivo, mode="r", encoding="utf-16") as arquivo:
+            leitor = csv.reader(arquivo, delimiter="\t")
+            rawMatrix = list(leitor)  # Matriz com todas as linhas
+
+            # --- PRIMEIRAS LINHAS (CAMPOS ESPECÍFICOS) ---
+            print("\n" + "=" * 50)
+            print("Dados processados (7 primeiras linhas):")
+            print("=" * 50)
+            for linha in rawMatrix[1:7]:  # Linhas 2 a 7
+                if len(linha) >= 2:
+                    campo = linha[0].strip()
+                    valor = linha[1].strip()
+                    outros_dados[campo] = valor
+                    print(f"{campo}: {valor}")
+
+            # --- DADOS DOS PARTICIPANTES (VETORES) ---
+            print("\n" + "=" * 50)
+            print("Dados dos participantes (vetores):")
+            print("=" * 50)
+            for linha in rawMatrix[9:]:  # Linhas 10 em diante
+                # Verifica se a linha começa com "3. Atividades" e interrompe o loop
+                if len(linha) <=1: # and linha[0].strip() == "3. Atividades":
+                    break
+                    
+                if len(linha) >= 4:
+                    # Adiciona cada campo ao seu respectivo vetor
+                    nomes.append(linha[0].strip())
+                    entradas.append(linha[1].strip())
+                    saidas.append(linha[2].strip())
+                    duracoes.append(linha[3].strip())
+
+            print("\nExemplo de acesso aos vetores:")
+            for i in range(len(nomes)):
+                print(f"Participante {i + 1}:")
+                print(f"  Nome: {nomes[i]}")
+                print(f"  Entrada: {entradas[i]}")
+                print(f"  Saída: {saidas[i]}")
+                print(f"  Duração: {duracoes[i]}\n")
+
+    except FileNotFoundError:
+        print(f"Erro: Arquivo não encontrado: {nome_arquivo}")
+    except Exception as e:
+        print(f"Erro inesperado: {str(e)}")
+
+    # Retorna os vetores (opcional)
+    return {
+        "nomes": nomes,
+        "entradas": entradas,
+        "saidas": saidas,
+        "duracoes": duracoes,
+        "outros_dados": outros_dados,
+    }
 
 # TODO
 def calcularTempo(inicio_str, fim_str):
@@ -155,113 +262,7 @@ def calcularTempoLimitado(entrada_str, saida_str, inicio_limite_str, fim_limite_
     segundos = int(total_segundos % 60)
     
     return total_segundos, horas, minutos, segundos
-
-# TODO
-def lerArquivoCSV(nome_arquivo):
-    # Inicializa os vetores (listas) para cada campo
-    nomes = []
-    entradas = []
-    saidas = []
-    duracoes = []
-    outros_dados = {}  # Para as primeiras linhas (caso ainda queira mantê-las)
-
-    try:
-        with open(nome_arquivo, mode="r", encoding="utf-16") as arquivo:
-            leitor = csv.reader(arquivo, delimiter="\t")
-            rawMatrix = list(leitor)  # Matriz com todas as linhas
-
-            # --- PRIMEIRAS LINHAS (CAMPOS ESPECÍFICOS) ---
-            print("\n" + "=" * 50)
-            print("Dados processados (7 primeiras linhas):")
-            print("=" * 50)
-            for linha in rawMatrix[1:7]:  # Linhas 2 a 7
-                if len(linha) >= 2:
-                    campo = linha[0].strip()
-                    valor = linha[1].strip()
-                    outros_dados[campo] = valor
-                    print(f"{campo}: {valor}")
-
-            # --- DADOS DOS PARTICIPANTES (VETORES) ---
-            print("\n" + "=" * 50)
-            print("Dados dos participantes (vetores):")
-            print("=" * 50)
-            for linha in rawMatrix[9:]:  # Linhas 10 em diante
-                # Verifica se a linha começa com "3. Atividades" e interrompe o loop
-                if len(linha) <=1: # and linha[0].strip() == "3. Atividades":
-                    break
-                    
-                if len(linha) >= 4:
-                    # Adiciona cada campo ao seu respectivo vetor
-                    nomes.append(linha[0].strip())
-                    entradas.append(linha[1].strip())
-                    saidas.append(linha[2].strip())
-                    duracoes.append(linha[3].strip())
-
-            print("\nExemplo de acesso aos vetores:")
-            for i in range(len(nomes)):
-                print(f"Participante {i + 1}:")
-                print(f"  Nome: {nomes[i]}")
-                print(f"  Entrada: {entradas[i]}")
-                print(f"  Saída: {saidas[i]}")
-                print(f"  Duração: {duracoes[i]}\n")
-
-    except FileNotFoundError:
-        print(f"Erro: Arquivo não encontrado: {nome_arquivo}")
-    except Exception as e:
-        print(f"Erro inesperado: {str(e)}")
-
-    # Retorna os vetores (opcional)
-    return {
-        "nomes": nomes,
-        "entradas": entradas,
-        "saidas": saidas,
-        "duracoes": duracoes,
-        "outros_dados": outros_dados,
-    }
-    
-# DONE
-def validarHorario(mensagem):
-    """
-    Valida horário no formato HH:MM, incluindo horas (00-23) e minutos (00-59).
-    """
-    while True:
-        horario = input(f"{mensagem} (Ex: 23:59)\n> ")
-        if (
-            len(horario) == 5
-            and horario[2] == ':'
-            and horario[:2].isdigit()
-            and horario[3:].isdigit()
-        ):
-            horas = int(horario[:2])
-            minutos = int(horario[3:])
-            if 0 <= horas <= 23 and 0 <= minutos <= 59:
-                return horas, minutos
-        print("Horário inválido! Use o formato HH:MM (Ex: 14:30).")
-
-# TODO
-def calcularDuracao(hInicio, minInicio, hFim, minFim):
-    """Calcula a diferença entre dois horários e retorna a duração em horas e minutos,
-    bem como 75% dessa duração."""
-    # Converter tudo para minutos
-    total_inicio = hInicio * 60 + minInicio
-    total_fim = hFim * 60 + minFim
-    
-    # Calcular diferença (tratando caso em que passa para o dia seguinte)
-    if total_fim < total_inicio:
-        total_fim += 24 * 60  # Adiciona 24 horas se terminar no dia seguinte
-    
-    diferenca = total_fim - total_inicio
-    
-    # Converter de volta para horas e minutos
-    horas = diferenca // 60
-    minutos = diferenca % 60
-    
-    # Calcular 75% da duração (em minutos)
-    diferenca_75 = diferenca * 0.75
-    horas_75 = int(diferenca_75 // 60)
-    minutos_75 = int(diferenca_75 % 60)
-    
-    return horas, minutos, horas_75, minutos_75
+   
 
 def main():
     print("\n=== Leitor de Arquivos CSV ===")
