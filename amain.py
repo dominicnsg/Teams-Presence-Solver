@@ -145,9 +145,9 @@ def selecionarMultiplosArquivos(qtdDias, arquivosCSV):
     while True:
         try:
             selecionados = []
-            print(f"\nSelecione {qtdDias} arquivo(s) da lista:")
-            for i, arquivo in enumerate(arquivosCSV, start=1):
-                print(f"{i}. {arquivo}")
+            print(f"\nSelecione {qtdDias} arquivo(s) da lista acima:")
+            # for i, arquivo in enumerate(arquivosCSV, start=1):
+            #     print(f"{i}. {arquivo}")
             for _ in range(qtdDias):
                 while True:
                     try:
@@ -177,67 +177,68 @@ def selecionarMultiplosArquivos(qtdDias, arquivosCSV):
 # TODO
 
 
-def lerArquivoCSV(nome_arquivo):
-    # Inicializa os vetores (listas) para cada campo
-    nomes = []
-    entradas = []
-    saidas = []
-    duracoes = []
+def lerArquivoCSV(arquivos_selecionados):
+    # Inicializa listas para armazenar dados de todos os arquivos
+    todos_nomes = []
+    todas_entradas = []
+    todas_saidas = []
+    todas_duracoes = []
+    todos_outros_dados = []
 
-    outros_dados = {}  # Para as primeiras linhas (caso ainda queira mantê-las)
+    # Verifica se arquivos_selecionados é uma lista ou um único arquivo (str)
+    if isinstance(arquivos_selecionados, str):
+        arquivos_selecionados = [arquivos_selecionados]  # Transforma em lista
 
-    try:
-        with open(nome_arquivo, mode="r", encoding="utf-16") as arquivo:
-            leitor = csv.reader(arquivo, delimiter="\t")
-            rawMatrix = list(leitor)  # Matriz com todas as linhas
+    for nome_arquivo in arquivos_selecionados:
+        try:
+            with open(nome_arquivo, mode="r", encoding="utf-16") as arquivo:
+                leitor = csv.reader(arquivo, delimiter="\t")
+                rawMatrix = list(leitor)
 
-            # --- PRIMEIRAS LINHAS (CAMPOS ESPECÍFICOS) ---
-            print("\n" + "=" * 50)
-            print("Dados processados (7 primeiras linhas):")
-            print("=" * 50)
-            for linha in rawMatrix[1:7]:  # Linhas 2 a 7
-                if len(linha) >= 2:
-                    campo = linha[0].strip()
-                    valor = linha[1].strip()
-                    outros_dados[campo] = valor
-                    print(f"{campo}: {valor}")
+                # --- PRIMEIRAS LINHAS (CAMPOS ESPECÍFICOS) ---
+                outros_dados = {}
+                for linha in rawMatrix[1:7]:  # Linhas 2 a 7
+                    if len(linha) >= 2:
+                        campo = linha[0].strip()
+                        valor = linha[1].strip()
+                        outros_dados[campo] = valor
 
-            # --- DADOS DOS PARTICIPANTES (VETORES) ---
-            print("\n" + "=" * 50)
-            print("Dados dos participantes (vetores):")
-            print("=" * 50)
-            for linha in rawMatrix[9:]:  # Linhas 10 em diante
-                # Verifica se a linha começa com "3. Atividades" e interrompe o loop
-                if len(linha) <= 1:  # and linha[0].strip() == "3. Atividades":
-                    break
+                # --- DADOS DOS PARTICIPANTES (VETORES) ---
+                nomes = []
+                entradas = []
+                saidas = []
+                duracoes = []
 
-                if len(linha) >= 4:
-                    # Adiciona cada campo ao seu respectivo vetor
-                    nomes.append(linha[0].strip())
-                    entradas.append(linha[1].strip())
-                    saidas.append(linha[2].strip())
-                    duracoes.append(linha[3].strip())
+                for linha in rawMatrix[9:]:  # Linhas 10 em diante
+                    if len(linha) <= 1:  # Linha vazia ou sem dados relevantes
+                        break
 
-            print("\nExemplo de acesso aos vetores:")
-            for i in range(len(nomes)):
-                print(f"Participante {i + 1}:")
-                print(f"  Nome: {nomes[i]}")
-                print(f"  Entrada: {entradas[i]}")
-                print(f"  Saída: {saidas[i]}")
-                print(f"  Duração: {duracoes[i]}\n")
+                    if len(linha) >= 4:
+                        nomes.append(linha[0].strip())
+                        entradas.append(linha[1].strip())
+                        saidas.append(linha[2].strip())
+                        duracoes.append(linha[3].strip())
 
-    except FileNotFoundError:
-        print(f"Erro: Arquivo não encontrado: {nome_arquivo}")
-    except Exception as e:
-        print(f"Erro inesperado: {str(e)}")
+                # Adiciona os dados deste arquivo às listas principais
+                todos_nomes.append(nomes)
+                todas_entradas.append(entradas)
+                todas_saidas.append(saidas)
+                todas_duracoes.append(duracoes)
+                todos_outros_dados.append(outros_dados)
 
-    # Retorna os vetores (opcional)
-    return {
-        "nomes": nomes,
-        "entradas": entradas,
-        "saidas": saidas,
-        "duracoes": duracoes,
-        "outros_dados": outros_dados,
+        except FileNotFoundError:
+            print(f"Erro: Arquivo não encontrado: {nome_arquivo}")
+            continue  # Pula para o próximo arquivo
+        except Exception as e:
+            print(f"Erro inesperado ao processar {nome_arquivo}: {str(e)}")
+            continue
+
+    return { # TODO Checar isso aqui
+        "nomes": todos_nomes,          # Matriz: cada linha = lista de nomes de um CSV
+        "entradas": todas_entradas,    # Matriz: cada linha = lista de entradas de um CSV
+        "saidas": todas_saidas,        # Matriz: cada linha = lista de saídas de um CSV
+        "duracoes": todas_duracoes,    # Matriz: cada linha = lista de durações de um CSV
+        "outros_dados": todos_outros_dados,  # Lista de dicionários (um por CSV)
     }
 
 # =======================#
@@ -269,7 +270,6 @@ def calcularTempo(inicio_str, fim_str):
     return total_segundos, horas, minutos, segundos
 
 # TODO
-
 
 def calcularTempoLimitado(entrada_str, saida_str, inicio_limite_str, fim_limite_str):
     # Converte strings para objetos datetime
@@ -375,12 +375,22 @@ def main():
         # print(arquivosSelecionados)
         # print("===================================================")
 
-        for arquivo in arquivosSelecionados:
+        dadosFormatados = lerArquivoCSV(arquivosSelecionados)
+
+        # for i in range(len(arquivosSelecionados)):
+        #     print(f"\n=== Dados do Arquivo {i+1}: {arquivosSelecionados[i]} ===")
+        #     print("Nomes:", dadosFormatados["nomes"][i])
+        #     print("Entradas:", dadosFormatados["entradas"][i])
+        #     print("Saídas:", dadosFormatados["saidas"][i])
+        #     print("Durações:", dadosFormatados["duracoes"][i])
+        #     print("Metadados:", dadosFormatados["outros_dados"][i])
+
+        # for arquivo in arquivosSelecionados:
             # mudar lerarquivo para receber arquivos selecionados e realizar um
             # for dentro da funcao para guardar as informacoes de todos os arquivos
             # passar por cada arquivo para perguntar se tem nomes repetidos e juntar
 
-            dadosFormatados = lerArquivoCSV(arquivo)
+            # dadosFormatados = lerArquivoCSV(arquivo)
             # dadosTratados = tratarDados(dadosFormatados)
             # listaPresenca(montarTabela(dadosTratados))
 
