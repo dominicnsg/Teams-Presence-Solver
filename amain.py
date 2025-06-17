@@ -126,6 +126,19 @@ def listarArquivosCSV():
 
 # DONE
 
+def verificarQtdCSV(arquivosCSV, qtdDias):
+    if not arquivosCSV:
+        print("\nNão existem arquivos para serem lidos nessa pasta, por favor tente novamente.")
+        return False
+    
+    if qtdDias > len(arquivosCSV):
+        print(f"\nA quantidade de dias ({qtdDias}) é maior do que o número de CSVs nesta pasta: ({len(arquivosCSV)}), por favor tente novamente.")
+        return False  # indica que deve sair do while
+    
+    return True  # condições OK, pode continuar no while
+
+# DONE
+
 
 def selecionarMultiplosArquivos(qtdDias, arquivosCSV):
     """Permite ao usuário selecionar vários arquivos da lista com base no número de dias do curso """
@@ -345,18 +358,14 @@ def main():
             print("\nVamos ajustar os horários novamente...")
 
 
-        print("\n== Lendo arquivos CSV disponíveis...")
+        os.system('cls' if os.name == 'nt' else 'clear')  # Limpa a tela
+        print("-Limpando a tela...")
+
+        print("\n-Lendo arquivos CSV disponíveis...")
         arquivosCSV = listarArquivosCSV()
-        if not arquivosCSV:
-            print(
-                "\nNão existem arquivos para serem lidos nessa pasta, por favor tente novamente.")
+        if not verificarQtdCSV(arquivosCSV, qtdDias):
             break
-
-        if qtdDias > len(arquivosCSV):
-            print(
-                f"Por favor, a quantidade de dias ({qtdDias}) é maior do que o número de CSVs nesta pasta: {len(arquivosCSV)}")
-            break
-
+        
         arquivosSelecionados = selecionarMultiplosArquivos(
             qtdDias, arquivosCSV)  # guarda em CSV
         if not arquivosSelecionados:
