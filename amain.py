@@ -241,6 +241,43 @@ def lerArquivoCSV(arquivos_selecionados):
         "outros_dados": todos_outros_dados,  # Lista de dicionários (um por CSV)
     }
 
+
+def ordenarDadosPorNome(dados_formatados):
+    """Ordena todos os dados alfabeticamente pelo nome (mantendo a correspondência entre listas)"""
+    dados_ordenados = {
+        "nomes": [],
+        "entradas": [],
+        "saidas": [],
+        "duracoes": [],
+        "outros_dados": dados_formatados["outros_dados"]  # Metadados não são ordenados
+    }
+
+    for idx_arquivo in range(len(dados_formatados["nomes"])):
+        # Junta os dados em uma lista de tuplas (nome, entrada, saida, duracao)
+        dados_agrupados = list(zip(
+            dados_formatados["nomes"][idx_arquivo],
+            dados_formatados["entradas"][idx_arquivo],
+            dados_formatados["saidas"][idx_arquivo],
+            dados_formatados["duracoes"][idx_arquivo]
+        ))
+
+        # Ordena pelo nome (primeiro elemento da tupla)
+        dados_agrupados.sort(key=lambda x: x[0].lower())  # Case-insensitive
+
+        # Desempacota os dados ordenados de volta para as listas
+        nomes_ordenados, entradas_ordenadas, saidas_ordenadas, duracoes_ordenadas = zip(*dados_agrupados)
+
+        # Converte de tuplas para listas (se necessário)
+        dados_ordenados["nomes"].append(list(nomes_ordenados))
+        dados_ordenados["entradas"].append(list(entradas_ordenadas))
+        dados_ordenados["saidas"].append(list(saidas_ordenadas))
+        dados_ordenados["duracoes"].append(list(duracoes_ordenadas))
+
+    return dados_ordenados
+
+# def nomeUnico(CSV):
+
+
 # =======================#
 
 # TODO
@@ -376,14 +413,15 @@ def main():
         # print("===================================================")
 
         dadosFormatados = lerArquivoCSV(arquivosSelecionados)
+        dadosFormatados = ordenarDadosPorNome(dadosFormatados)
 
-        # for i in range(len(arquivosSelecionados)):
-        #     print(f"\n=== Dados do Arquivo {i+1}: {arquivosSelecionados[i]} ===")
-        #     print("Nomes:", dadosFormatados["nomes"][i])
-        #     print("Entradas:", dadosFormatados["entradas"][i])
-        #     print("Saídas:", dadosFormatados["saidas"][i])
-        #     print("Durações:", dadosFormatados["duracoes"][i])
-        #     print("Metadados:", dadosFormatados["outros_dados"][i])
+        for i in range(len(arquivosSelecionados)):
+            print(f"\n=== Dados do Arquivo {i+1}: {arquivosSelecionados[i]} ===")
+            print("Nomes:", dadosFormatados["nomes"][i])
+            print("Entradas:", dadosFormatados["entradas"][i])
+            print("Saídas:", dadosFormatados["saidas"][i])
+            print("Durações:", dadosFormatados["duracoes"][i])
+            print("Metadados:", dadosFormatados["outros_dados"][i])
 
         # for arquivo in arquivosSelecionados:
             # mudar lerarquivo para receber arquivos selecionados e realizar um
