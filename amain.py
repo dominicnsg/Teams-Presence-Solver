@@ -126,15 +126,17 @@ def listarArquivosCSV():
 
 # DONE
 
+
 def verificarQtdCSV(arquivosCSV, qtdDias):
     if not arquivosCSV:
         print("\nNão existem arquivos para serem lidos nessa pasta, por favor tente novamente.")
         return False
-    
+
     if qtdDias > len(arquivosCSV):
-        print(f"\nA quantidade de dias ({qtdDias}) é maior do que o número de CSVs nesta pasta: ({len(arquivosCSV)}), por favor tente novamente.")
+        print(
+            f"\nA quantidade de dias ({qtdDias}) é maior do que o número de CSVs nesta pasta: ({len(arquivosCSV)}), por favor tente novamente.")
         return False  # indica que deve sair do while
-    
+
     return True  # condições OK, pode continuar no while
 
 # DONE
@@ -233,12 +235,13 @@ def lerArquivoCSV(arquivos_selecionados):
             print(f"Erro inesperado ao processar {nome_arquivo}: {str(e)}")
             continue
 
-    return { # TODO Checar isso aqui
+    return {  # TODO Checar isso aqui
         "nomes": todos_nomes,          # Matriz: cada linha = lista de nomes de um CSV
         "entradas": todas_entradas,    # Matriz: cada linha = lista de entradas de um CSV
         "saidas": todas_saidas,        # Matriz: cada linha = lista de saídas de um CSV
         "duracoes": todas_duracoes,    # Matriz: cada linha = lista de durações de um CSV
-        "outros_dados": todos_outros_dados,  # Lista de dicionários (um por CSV)
+        # Lista de dicionários (um por CSV)
+        "outros_dados": todos_outros_dados,
     }
 
 
@@ -249,7 +252,8 @@ def ordenarDadosPorNome(dados_formatados):
         "entradas": [],
         "saidas": [],
         "duracoes": [],
-        "outros_dados": dados_formatados["outros_dados"]  # Metadados não são ordenados
+        # Metadados não são ordenados
+        "outros_dados": dados_formatados["outros_dados"]
     }
 
     for idx_arquivo in range(len(dados_formatados["nomes"])):
@@ -265,7 +269,8 @@ def ordenarDadosPorNome(dados_formatados):
         dados_agrupados.sort(key=lambda x: x[0].lower())  # Case-insensitive
 
         # Desempacota os dados ordenados de volta para as listas
-        nomes_ordenados, entradas_ordenadas, saidas_ordenadas, duracoes_ordenadas = zip(*dados_agrupados)
+        nomes_ordenados, entradas_ordenadas, saidas_ordenadas, duracoes_ordenadas = zip(
+            *dados_agrupados)
 
         # Converte de tuplas para listas (se necessário)
         dados_ordenados["nomes"].append(list(nomes_ordenados))
@@ -275,13 +280,82 @@ def ordenarDadosPorNome(dados_formatados):
 
     return dados_ordenados
 
-# def nomeUnico(CSV):
+
+#registros[nome]["ocorrencias"].append((i_arquivo, i_linha))
+def separar_nomes_repetidos(dadosFormatados): #Com TODA certeza dá pra melhorar isso aqui (TODO)
+    novos_dados = {
+        "nomes": [],
+        "entradas": [],
+        "saidas": [],
+        "duracoes": [],
+        "outros_dados": dadosFormatados["outros_dados"]  # Mantém os metadados
+    }
+    
+    # Dicionário para guardar os repetidos (por arquivo)
+    dados_repetidos = {
+        "nomes": [],
+        "entradas": [],
+        "saidas": [],
+        "duracoes": []
+    }
+
+    for i in range(len(dadosFormatados["nomes"])):
+        nomes_arquivo = dadosFormatados["nomes"][i]
+        entradas_arquivo = dadosFormatados["entradas"][i]
+        saidas_arquivo = dadosFormatados["saidas"][i]
+        duracoes_arquivo = dadosFormatados["duracoes"][i]
+
+        nomes_unicos = {}
+        indices_manter = []
+        indices_repetidos = []  # Índices dos nomes repetidos
+
+        for idx, nome in enumerate(nomes_arquivo):
+            if nome not in nomes_unicos:
+                nomes_unicos[nome] = idx
+                indices_manter.append(idx)
+            else:
+                indices_repetidos.append(idx)  # Guarda índices dos repetidos
+
+        # Filtra os dados ORIGINAIS (sem repetições)
+        novos_nomes = [nomes_arquivo[j] for j in indices_manter]
+        novas_entradas = [entradas_arquivo[j] for j in indices_manter]
+        novas_saidas = [saidas_arquivo[j] for j in indices_manter]
+        novas_duracoes = [duracoes_arquivo[j] for j in indices_manter]
+
+        novos_dados["nomes"].append(novos_nomes)
+        novos_dados["entradas"].append(novas_entradas)
+        novos_dados["saidas"].append(novas_saidas)
+        novos_dados["duracoes"].append(novas_duracoes)
+
+        # Filtra os dados REPETIDOS (apenas as ocorrências extras)
+        nomes_repetidos = [nomes_arquivo[j] for j in indices_repetidos]
+        entradas_repetidas = [entradas_arquivo[j] for j in indices_repetidos]
+        saidas_repetidas = [saidas_arquivo[j] for j in indices_repetidos]
+        duracoes_repetidas = [duracoes_arquivo[j] for j in indices_repetidos]
+
+        dados_repetidos["nomes"].append(nomes_repetidos)
+        dados_repetidos["entradas"].append(entradas_repetidas)
+        dados_repetidos["saidas"].append(saidas_repetidas)
+        dados_repetidos["duracoes"].append(duracoes_repetidas)
+
+    return novos_dados, # dados_repetidos  # Retorna ambos os resultados
 
 
-# =======================#
 
-# TODO
 
+def converter_duracao_para_minutos(duracao_str):
+    # Exemplo: "3h 30m" → 3 * 60 + 30 = 210 minutos
+    horas = 0
+    minutos = 0
+    
+    partes = duracao_str.split()
+    for parte in partes:
+        if 'h' in parte:
+            horas = int(parte.replace('h', ''))
+        elif 'm' in parte:
+            minutos = int(parte.replace('m', ''))
+    
+    return horas * 60 + minutos
 
 def calcularTempo(inicio_str, fim_str):
     # Função para converter string HH:MM para objeto datetime (com data fictícia)
@@ -307,6 +381,7 @@ def calcularTempo(inicio_str, fim_str):
     return total_segundos, horas, minutos, segundos
 
 # TODO
+
 
 def calcularTempoLimitado(entrada_str, saida_str, inicio_limite_str, fim_limite_str):
     # Converte strings para objetos datetime
@@ -364,7 +439,7 @@ def main():
     print("\n===== Leitor de Arquivos CSV =====")
     print("feito por: @dominicnsg")
     print("contato comercial: douglasnicsg@hotmail.com")
-    
+
     # lembrar do /r
     while True:
 
@@ -394,7 +469,6 @@ def main():
                 break
             print("\nVamos ajustar os horários novamente...")
 
-
         os.system('cls' if os.name == 'nt' else 'clear')  # Limpa a tela
         print("-Limpando a tela...")
 
@@ -402,7 +476,7 @@ def main():
         arquivosCSV = listarArquivosCSV()
         if not verificarQtdCSV(arquivosCSV, qtdDias):
             break
-        
+
         arquivosSelecionados = selecionarMultiplosArquivos(
             qtdDias, arquivosCSV)  # guarda em CSV
         if not arquivosSelecionados:
@@ -415,8 +489,11 @@ def main():
         dadosFormatados = lerArquivoCSV(arquivosSelecionados)
         dadosFormatados = ordenarDadosPorNome(dadosFormatados)
 
+        # dadosFormatados = separar_nomes_repetidos(dadosFormatados)
+
         for i in range(len(arquivosSelecionados)):
-            print(f"\n=== Dados do Arquivo {i+1}: {arquivosSelecionados[i]} ===")
+            print(
+                f"\n=== Dados do Arquivo {i+1}: {arquivosSelecionados[i]} ===")
             print("Nomes:", dadosFormatados["nomes"][i])
             print("Entradas:", dadosFormatados["entradas"][i])
             print("Saídas:", dadosFormatados["saidas"][i])
