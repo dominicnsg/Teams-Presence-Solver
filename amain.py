@@ -2,6 +2,8 @@ import csv
 import os
 import glob
 from datetime import datetime, timedelta
+import time
+import sys
 
 # DONE
 
@@ -281,8 +283,9 @@ def ordenarDadosPorNome(dados_formatados):
     return dados_ordenados
 
 
-#registros[nome]["ocorrencias"].append((i_arquivo, i_linha))
-def separar_nomes_repetidos(dadosFormatados): #Com TODA certeza dá pra melhorar isso aqui (TODO)
+# registros[nome]["ocorrencias"].append((i_arquivo, i_linha))
+# Com TODA certeza dá pra melhorar isso aqui (TODO)
+def separar_nomes_repetidos(dadosFormatados):
     novos_dados = {
         "nomes": [],
         "entradas": [],
@@ -290,7 +293,7 @@ def separar_nomes_repetidos(dadosFormatados): #Com TODA certeza dá pra melhorar
         "duracoes": [],
         "outros_dados": dadosFormatados["outros_dados"]  # Mantém os metadados
     }
-    
+
     # Dicionário para guardar os repetidos (por arquivo)
     dados_repetidos = {
         "nomes": [],
@@ -338,24 +341,64 @@ def separar_nomes_repetidos(dadosFormatados): #Com TODA certeza dá pra melhorar
         dados_repetidos["saidas"].append(saidas_repetidas)
         dados_repetidos["duracoes"].append(duracoes_repetidas)
 
-    return novos_dados, # dados_repetidos  # Retorna ambos os resultados
+    return novos_dados,  # dados_repetidos  # Retorna ambos os resultados
 
 
+def criar_matriz_nome_duracao(dadosFormatados):
+    matriz = []  # Lista de tuplas no formato (nome, duracao_em_minutos)
+
+    for i in range(len(dadosFormatados["nomes"])):
+        nomes_arquivo = dadosFormatados["nomes"][i]
+        duracoes_arquivo = dadosFormatados["duracoes"][i]
+
+        for nome, duracao in zip(nomes_arquivo, duracoes_arquivo):
+            # Converte duração (ex: "3h 30m") para minutos (ex: 210)
+            duracao_em_minutos = converter_duracao_para_minutos(duracao)
+
+            # Verifica se o nome já está na matriz
+            encontrado = False
+            for idx, (nome_existente, duracao_existente) in enumerate(matriz):
+                if nome_existente == nome:
+                    # Soma as durações
+                    matriz[idx] = (nome, duracao_existente +
+                                   duracao_em_minutos)
+                    encontrado = True
+                    break
+
+            if not encontrado:
+                matriz.append((nome, duracao_em_minutos))
+
+    return matriz
 
 
 def converter_duracao_para_minutos(duracao_str):
     # Exemplo: "3h 30m" → 3 * 60 + 30 = 210 minutos
     horas = 0
     minutos = 0
-    
+
     partes = duracao_str.split()
     for parte in partes:
         if 'h' in parte:
             horas = int(parte.replace('h', ''))
         elif 'm' in parte:
             minutos = int(parte.replace('m', ''))
-    
+
     return horas * 60 + minutos
+
+
+def imprimir_matriz_duracao(matriz):
+    print("\n=== Matriz de Nomes e Durações ===")
+    print("{:<40} {:<15}".format("NOME", "DURAÇÃO (h:m)"))
+    print("-" * 55)
+
+    for nome, duracao_em_minutos in matriz:
+        # Converte minutos de volta para "Xh Ym"
+        horas = duracao_em_minutos // 60
+        minutos = duracao_em_minutos % 60
+        duracao_formatada = f"{horas}h {minutos}m"
+
+        print("{:<40} {:<15}".format(nome, duracao_formatada))
+
 
 def calcularTempo(inicio_str, fim_str):
     # Função para converter string HH:MM para objeto datetime (com data fictícia)
@@ -489,31 +532,39 @@ def main():
         dadosFormatados = lerArquivoCSV(arquivosSelecionados)
         dadosFormatados = ordenarDadosPorNome(dadosFormatados)
 
+        dadosFormatados = criar_matriz_nome_duracao(dadosFormatados)
+        imprimir_matriz_duracao(dadosFormatados)
+
         # dadosFormatados = separar_nomes_repetidos(dadosFormatados)
 
-        for i in range(len(arquivosSelecionados)):
-            print(
-                f"\n=== Dados do Arquivo {i+1}: {arquivosSelecionados[i]} ===")
-            print("Nomes:", dadosFormatados["nomes"][i])
-            print("Entradas:", dadosFormatados["entradas"][i])
-            print("Saídas:", dadosFormatados["saidas"][i])
-            print("Durações:", dadosFormatados["duracoes"][i])
-            print("Metadados:", dadosFormatados["outros_dados"][i])
+        # for i in range(len(arquivosSelecionados)):
+        #     print(
+        #         f"\n=== Dados do Arquivo {i+1}: {arquivosSelecionados[i]} ===")
+        #     print("Nomes:", dadosFormatados["nomes"][i])
+        #     print("Entradas:", dadosFormatados["entradas"][i])
+        #     print("Saídas:", dadosFormatados["saidas"][i])
+        #     print("Durações:", dadosFormatados["duracoes"][i])
+        #     print("Metadados:", dadosFormatados["outros_dados"][i])
 
         # for arquivo in arquivosSelecionados:
-            # mudar lerarquivo para receber arquivos selecionados e realizar um
-            # for dentro da funcao para guardar as informacoes de todos os arquivos
-            # passar por cada arquivo para perguntar se tem nomes repetidos e juntar
+        # mudar lerarquivo para receber arquivos selecionados e realizar um
+        # for dentro da funcao para guardar as informacoes de todos os arquivos
+        # passar por cada arquivo para perguntar se tem nomes repetidos e juntar
 
-            # dadosFormatados = lerArquivoCSV(arquivo)
-            # dadosTratados = tratarDados(dadosFormatados)
-            # listaPresenca(montarTabela(dadosTratados))
+        # dadosFormatados = lerArquivoCSV(arquivo)
+        # dadosTratados = tratarDados(dadosFormatados)
+        # listaPresenca(montarTabela(dadosTratados))
 
         continuar = input(
             "\nDeseja repetir o processo? (s/n): ").strip().lower()
 
         if continuar != "s":
             break
+
+    # Mensagem de encerramento
+    print("\nO programa será encerrado em 3 segundos...")
+    time.sleep(4)
+    sys.exit()
 
 
 if __name__ == "__main__":
