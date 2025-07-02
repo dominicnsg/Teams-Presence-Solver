@@ -532,6 +532,7 @@ def main():
         dadosFormatados = lerArquivoCSV(arquivosSelecionados)
         dadosFormatados = ordenarDadosPorNome(dadosFormatados)
 
+        # If + de um arquivo, fazer, se não só imprimir os resultados
         dadosFormatados = criar_matriz_nome_duracao(dadosFormatados)
         imprimir_matriz_duracao(dadosFormatados)
 
