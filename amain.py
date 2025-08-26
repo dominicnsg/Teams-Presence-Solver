@@ -386,18 +386,24 @@ def converter_duracao_para_minutos(duracao_str):
     return horas * 60 + minutos
 
 
-def imprimir_matriz_duracao(matriz):
+def imprimir_matriz_duracao(matriz, total75):
     print("\n=== Matriz de Nomes e Durações ===")
-    print("{:<40} {:<15}".format("NOME", "DURAÇÃO (h:m)"))
-    print("-" * 55)
-
+    print("{:<40} {:<15} {:<10}".format("NOME", "DURAÇÃO (h:m)", "RESULTADO"))
+    print("-" * 65)
+    
+    # Converte 75% do total para minutos para comparação
+    total75_minutos = decimalParaMinutos(total75)
+    
     for nome, duracao_em_minutos in matriz:
         # Converte minutos de volta para "Xh Ym"
         horas = duracao_em_minutos // 60
         minutos = duracao_em_minutos % 60
         duracao_formatada = f"{horas}h {minutos}m"
-
-        print("{:<40} {:<15}".format(nome, duracao_formatada))
+        
+        # Verifica se atingiu 75% da duração total
+        resultado = "Aprovado" if duracao_em_minutos >= total75_minutos else "Reprovado"
+        
+        print("{:<40} {:<15} {:<10}".format(nome, duracao_formatada, resultado))
 
 
 def calcularTempo(inicio_str, fim_str):
@@ -477,6 +483,31 @@ def calcularTempoLimitado(entrada_str, saida_str, inicio_limite_str, fim_limite_
     return total_segundos, horas, minutos, segundos
 # =======================#
 
+def salvar_matriz_para_excel(matriz, total75, nome_arquivo="presenca_consolidada.csv"):
+    """Salva a matriz de nomes e durações em um arquivo CSV (Excel) com verificação de aprovação"""
+    with open(nome_arquivo, mode='w', newline='', encoding='utf-8') as arquivo:
+        escritor = csv.writer(arquivo)
+        
+        # Escreve o cabeçalho
+        escritor.writerow(["Nome", "Duração Total (horas)", "Duração Total (minutos)", 
+                          "Duração Formatada (h:m)", "Resultado"])
+        
+        # Converte 75% do total para minutos para comparação
+        total75_minutos = decimalParaMinutos(total75)
+        
+        # Escreve os dados
+        for nome, duracao_em_minutos in matriz:
+            horas = duracao_em_minutos // 60
+            minutos = duracao_em_minutos % 60
+            duracao_horas = round(duracao_em_minutos / 60, 2)
+            duracao_formatada = f"{horas}h {minutos}m"
+            
+            # Verifica se atingiu 75% da duração total
+            resultado = "Aprovado" if duracao_em_minutos >= total75_minutos else "Reprovado"
+            
+            escritor.writerow([nome, duracao_horas, duracao_em_minutos, duracao_formatada, resultado])
+    
+    print(f"\nArquivo '{nome_arquivo}' gerado com sucesso!")
 
 def main():
     print("\n===== Leitor de Arquivos CSV =====")
@@ -534,7 +565,11 @@ def main():
 
         # If + de um arquivo, fazer, se não só imprimir os resultados
         dadosFormatados = criar_matriz_nome_duracao(dadosFormatados)
-        imprimir_matriz_duracao(dadosFormatados)
+        imprimir_matriz_duracao(dadosFormatados, total75)  # Passando total75 como parâmetro
+
+       
+        # Adicione esta linha para salvar em Excel (CSV)
+        salvar_matriz_para_excel(dadosFormatados, total75)
 
         # dadosFormatados = separar_nomes_repetidos(dadosFormatados)
 
@@ -570,3 +605,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# TODO adicionar porcentagem USER
